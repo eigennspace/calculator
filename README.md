@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Calculator
 
-## Getting Started
+A clean, minimal calculator: basic operations, keyboard support, monochromatic dark/light theme. Single-page Next.js app, portable Docker image.
 
-First, run the development server:
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# dev
+npm install
+npm run dev      # → http://localhost:3000
+
+# test
+npm test         # vitest — unit tests for the reducer
+
+# build & run (Docker)
+docker build -t calculator .
+docker run -p 3000:3000 calculator
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+├── lib/
+│   ├── calculator-types.ts   — State & action types, initial state
+│   ├── calculator-reducer.ts  — Pure reducer (the only business logic)
+│   └── button-config.ts       — Key layout & action mapping
+├── components/
+│   ├── calculator.tsx          — Stateful container, keyboard listener
+│   ├── display.tsx             — Current value + pending op preview
+│   ├── keypad.tsx              — CSS grid layout
+│   ├── calculator-button.tsx   — Single button with variant styling
+│   ├── theme-provider.tsx      — next-themes wrapper
+│   └── theme-toggle.tsx        — Dark/light toggle
+├── app/
+│   ├── page.tsx                — Single route (/)
+│   ├── layout.tsx              — Root layout with ThemeProvider
+│   └── globals.css             — CSS variables, Tailwind imports
+└── __tests__/
+    └── calculator-reducer.test.ts
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Decisions
 
-## Learn More
+- **Immediate execution** — each operator commits the previous op. Left-to-right, no precedence. See [ADR-0001](./docs/adr/0001-immediate-execution.md).
+- **String-based state** — numbers stored as strings for exact digit-cap and display fidelity. See [ADR-0002](./docs/adr/0002-string-based-numbers.md).
+- **useReducer** — single pure function, no external state lib.
 
-To learn more about Next.js, take a look at the following resources:
+## Domain Language
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [CONTEXT.md](./CONTEXT.md) for glossary of state terms (currentValue, previousValue, resetNext, error) and behavioural concepts.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+```bash
+docker build -t calculator .
+docker run -p 3000:3000 calculator
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Image is ~150 MB (Node 22 Alpine, Next.js standalone output). Port 3000.
